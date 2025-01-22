@@ -5,8 +5,8 @@ import '../styles/Patient.css';
 const Patient = () => {
     const [patients, setPatients] = useState([]);
     const [formData, setFormData] = useState({ name: '', age: '', gender: '' });
+    const [editingPatient, setEditingPatient] = useState(null); 
 
-    // Fetch patients on component mount
     useEffect(() => {
         const fetchPatients = async () => {
             try {
@@ -19,12 +19,10 @@ const Patient = () => {
         fetchPatients();
     }, []);
 
-    // Handle form input changes
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Add a new patient
     const addPatient = async () => {
         try {
             const response = await axios.post('http://localhost:3001/patients/add', formData);
@@ -35,7 +33,6 @@ const Patient = () => {
         }
     };
 
-    // Delete a patient
     const deletePatient = async (id) => {
         try {
             await axios.delete(`http://localhost:3001/patients/delete/${id}`);
@@ -45,10 +42,33 @@ const Patient = () => {
         }
     };
 
+    const startEditing = (patient) => {
+        setEditingPatient(patient);
+        setFormData({ name: patient.name, age: patient.age, gender: patient.gender });
+    };
+
+    const updatePatient = async () => {
+        try {
+            const response = await axios.post(
+                `http://localhost:3001/patients/update/${editingPatient._id}`,
+                formData
+            );
+            setPatients(
+                patients.map((patient) =>
+                    patient._id === editingPatient._id ? response.data : patient
+                )
+            );
+            setEditingPatient(null);
+            setFormData({ name: '', age: '', gender: '' });
+        } catch (error) {
+            console.error('Error updating patient:', error);
+        }
+    };
+
     return (
         <div className="patient-container">
             <div className="add-patient">
-                <h3>Add New Patient</h3>
+                <h3>{editingPatient ? 'Edit Patient' : 'Add New Patient'}</h3>
                 <input
                     type="text"
                     name="name"
@@ -70,7 +90,11 @@ const Patient = () => {
                     value={formData.gender}
                     onChange={handleChange}
                 />
-                <button onClick={addPatient}>Add Patient</button>
+                {editingPatient ? (
+                    <button onClick={updatePatient}>Update Patient</button>
+                ) : (
+                    <button onClick={addPatient}>Add Patient</button>
+                )}
             </div>
             <div className="patient-list">
                 <h3>Patients ({patients.length})</h3>
@@ -79,7 +103,18 @@ const Patient = () => {
                         <p><strong>{patient.name}</strong></p>
                         <p>Age: {patient.age}</p>
                         <p>Gender: {patient.gender}</p>
-                        <button className="delete-button" onClick={() => deletePatient(patient._id)}>Delete</button>
+                        <button
+                            className="delete-button"
+                            onClick={() => deletePatient(patient._id)}
+                        >
+                            Delete
+                        </button>
+                        <button
+                            className="edit-button"
+                            onClick={() => startEditing(patient)}
+                        >
+                            Edit
+                        </button>
                     </div>
                 ))}
             </div>

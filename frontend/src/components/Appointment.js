@@ -5,6 +5,7 @@ import '../styles/Appointment.css';
 const Appointment = () => {
     const [appointments, setAppointments] = useState([]);
     const [formData, setFormData] = useState({ patientName: '', doctorName: '' });
+    const [editingAppointment, setEditingAppointment] = useState(null);
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -42,10 +43,33 @@ const Appointment = () => {
         }
     };
 
+    const startEditing = (appointment) => {
+        setEditingAppointment(appointment); 
+        setFormData({ patientName: appointment.patientName, doctorName: appointment.doctorName });
+    };
+
+    const updateAppointment = async () => {
+        try {
+        const response = await axios.post(
+            `http://localhost:3001/appointments/update/${editingAppointment._id}`,
+            formData
+        );
+        setAppointments(
+            appointments.map((appointment) =>
+            appointment._id === editingAppointment._id ? response.data : appointment
+            )
+        );
+        setEditingAppointment(null);
+        setFormData({ patientName: '', doctorName: '' });
+        } catch (error) {
+        console.error('Error updating appointment:', error);
+        }
+    };
+
     return (
         <div className="appointment-container">
         <div className="add-appointment">
-            <h3>Add New Appointment</h3>
+            <h3>{editingAppointment ? 'Edit Appointment' : 'Add New Appointment'}</h3>
             <input
             type="text"
             name="patientName"
@@ -60,7 +84,11 @@ const Appointment = () => {
             value={formData.doctorName}
             onChange={handleChange}
             />
+            {editingAppointment ? (
+            <button onClick={updateAppointment}>Update Appointment</button>
+            ) : (
             <button onClick={addAppointment}>Add Appointment</button>
+            )}
         </div>
         <div className="appointment-list">
             <h3>Appointments ({appointments.length})</h3>
@@ -76,6 +104,12 @@ const Appointment = () => {
                 onClick={() => deleteAppointment(appointment._id)}
                 >
                 Delete
+                </button>
+                <button
+                className="edit-button"
+                onClick={() => startEditing(appointment)}
+                >
+                Edit
                 </button>
             </div>
             ))}
