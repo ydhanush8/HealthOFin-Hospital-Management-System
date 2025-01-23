@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import '../styles/Patient.css';
+import API from '../Api';
+import { Link, useNavigate } from 'react-router-dom';
+import '../App.css'
 
 const Patient = () => {
     const [patients, setPatients] = useState([]);
     const [formData, setFormData] = useState({ name: '', age: '', gender: '' });
     const [editingPatient, setEditingPatient] = useState(null); 
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/signin');
+    };
 
     useEffect(() => {
         const fetchPatients = async () => {
             try {
-                const response = await axios.get('http://localhost:3001/patients/');
+                const response = await API.get('/patients/');
                 setPatients(response.data);
             } catch (error) {
                 console.error('Error fetching patients:', error);
@@ -25,7 +33,7 @@ const Patient = () => {
 
     const addPatient = async () => {
         try {
-            const response = await axios.post('http://localhost:3001/patients/add', formData);
+            const response = await API.post('/patients/add', formData);
             setPatients([...patients, response.data]);
             setFormData({ name: '', age: '', gender: '' });
         } catch (error) {
@@ -35,7 +43,7 @@ const Patient = () => {
 
     const deletePatient = async (id) => {
         try {
-            await axios.delete(`http://localhost:3001/patients/delete/${id}`);
+            await API.delete(`/patients/delete/${id}`);
             setPatients(patients.filter((patient) => patient._id !== id));
         } catch (error) {
             console.error('Error deleting patient:', error);
@@ -49,8 +57,8 @@ const Patient = () => {
 
     const updatePatient = async () => {
         try {
-            const response = await axios.post(
-                `http://localhost:3001/patients/update/${editingPatient._id}`,
+            const response = await API.post(
+                `/patients/update/${editingPatient._id}`,
                 formData
             );
             setPatients(
@@ -66,6 +74,15 @@ const Patient = () => {
     };
 
     return (
+        <>
+        <div>
+                <nav className="navbar">
+                <Link to="/appointment" className="nav-link">Appointments</Link>
+                <Link to="/doctors" className="nav-link">Doctors</Link>
+                <Link to="/patients" className="nav-link">Patients</Link>
+                <button className="nav-link logout" onClick={handleLogout}>Logout</button>
+                </nav>
+            </div>
         <div className="patient-container">
             <div className="add-patient">
                 <h3>{editingPatient ? 'Edit Patient' : 'Add New Patient'}</h3>
@@ -75,21 +92,21 @@ const Patient = () => {
                     placeholder="Name"
                     value={formData.name}
                     onChange={handleChange}
-                />
+                    />
                 <input
                     type="number"
                     name="age"
                     placeholder="Age"
                     value={formData.age}
                     onChange={handleChange}
-                />
+                    />
                 <input
                     type="text"
                     name="gender"
                     placeholder="Gender"
                     value={formData.gender}
                     onChange={handleChange}
-                />
+                    />
                 {editingPatient ? (
                     <button onClick={updatePatient}>Update Patient</button>
                 ) : (
@@ -106,19 +123,20 @@ const Patient = () => {
                         <button
                             className="delete-button"
                             onClick={() => deletePatient(patient._id)}
-                        >
+                            >
                             Delete
                         </button>
                         <button
                             className="edit-button"
                             onClick={() => startEditing(patient)}
-                        >
+                            >
                             Edit
                         </button>
                     </div>
                 ))}
             </div>
         </div>
+        </>
     );
 };
 

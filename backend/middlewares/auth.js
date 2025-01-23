@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-const freeRoutes = ['/signin','/signup'];
+const freeRoutes = ['/user/signin','/user/signup'];
 
 export default async function authorizationUser(req, res, next) {
     const token = req.headers.authorization;

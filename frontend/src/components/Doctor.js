@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import '../styles/Doctor.css';
+import API from '../Api';
+import { Link, useNavigate } from 'react-router-dom';
+import '../App.css'
 
 const Doctor = () => {
     const [doctors, setDoctors] = useState([]);
     const [formData, setFormData] = useState({ name: '', specialty: '' });
     const [editingDoctor, setEditingDoctor] = useState(null); 
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/signin');
+    };
 
     useEffect(() => {
         const fetchDoctors = async () => {
         try {
-            const response = await axios.get('http://localhost:3001/doctors/');
+            const response = await API.get('/doctors/');
             setDoctors(response.data);
         } catch (error) {
             console.error('Error fetching doctors:', error);
@@ -25,7 +33,7 @@ const Doctor = () => {
 
     const addDoctor = async () => {
         try {
-        const response = await axios.post('http://localhost:3001/doctors/add', formData);
+        const response = await API.post('/doctors/add', formData);
         setDoctors([...doctors, response.data]);
         setFormData({ name: '', specialty: '' });
         } catch (error) {
@@ -35,7 +43,7 @@ const Doctor = () => {
 
     const deleteDoctor = async (id) => {
         try {
-        await axios.delete(`http://localhost:3001/doctors/delete/${id}`);
+        await API.delete(`/doctors/delete/${id}`);
         setDoctors(doctors.filter((doctor) => doctor._id !== id));
         } catch (error) {
         console.error('Error deleting doctor:', error);
@@ -49,8 +57,8 @@ const Doctor = () => {
 
     const updateDoctor = async () => {
         try {
-        const response = await axios.post(
-            `http://localhost:3001/doctors/update/${editingDoctor._id}`,
+        const response = await API.post(
+            `/doctors/update/${editingDoctor._id}`,
             formData
         );
         setDoctors(
@@ -66,6 +74,15 @@ const Doctor = () => {
     };
 
     return (
+        <>
+        <div>
+                <nav className="navbar">
+                <Link to="/appointment" className="nav-link">Appointments</Link>
+                <Link to="/doctors" className="nav-link">Doctors</Link>
+                <Link to="/patients" className="nav-link">Patients</Link>
+                <button className="nav-link logout" onClick={handleLogout}>Logout</button>
+                </nav>
+            </div>
         <div className="doctor-container">
         <div className="add-doctor">
             <h3>{editingDoctor ? 'Edit Doctor' : 'Add New Doctor'}</h3>
@@ -84,15 +101,15 @@ const Doctor = () => {
             onChange={handleChange}
             />
             {editingDoctor ? (
-            <button onClick={updateDoctor}>Update Doctor</button>
+                <button onClick={updateDoctor}>Update Doctor</button>
             ) : (
-            <button onClick={addDoctor}>Add Doctor</button>
+                <button onClick={addDoctor}>Add Doctor</button>
             )}
         </div>
         <div className="doctor-list">
             <h3>Doctors ({doctors.length})</h3>
             {doctors.map((doctor) => (
-            <div key={doctor._id} className="doctor-card">
+                <div key={doctor._id} className="doctor-card">
                 <p><strong>{doctor.name}</strong></p>
                 <p>Specialty: {doctor.specialty}</p>
                 <p>Added: {new Date(doctor.createdAt).toLocaleDateString()}</p>
@@ -112,6 +129,7 @@ const Doctor = () => {
             ))}
         </div>
         </div>
+        </>
     );
 };
 

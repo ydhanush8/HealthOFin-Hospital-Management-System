@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import '../styles/Appointment.css';
+import API from '../Api';
+import { Link, useNavigate } from 'react-router-dom';
+import '../App.css'
 
 const Appointment = () => {
     const [appointments, setAppointments] = useState([]);
     const [formData, setFormData] = useState({ patientName: '', doctorName: '' });
     const [editingAppointment, setEditingAppointment] = useState(null);
+    const navigate = useNavigate();
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/signin');
+    };
     useEffect(() => {
         const fetchAppointments = async () => {
         try {
-            const response = await axios.get('http://localhost:3001/appointments/');
+            const response = await API.get('/appointments/');
             setAppointments(response.data);
         } catch (error) {
             console.error('Error fetching appointments:', error);
@@ -26,7 +33,7 @@ const Appointment = () => {
 
     const addAppointment = async () => {
         try {
-        const response = await axios.post('http://localhost:3001/appointments/add', formData);
+        const response = await API.post('/appointments/add', formData);
         setAppointments([...appointments, response.data]);
         setFormData({ patientName: '', doctorName: '' });
         } catch (error) {
@@ -36,7 +43,7 @@ const Appointment = () => {
 
     const deleteAppointment = async (id) => {
         try {
-        await axios.delete(`http://localhost:3001/appointments/delete/${id}`);
+        await API.delete(`/appointments/delete/${id}`);
         setAppointments(appointments.filter((appointment) => appointment._id !== id));
         } catch (error) {
         console.error('Error deleting appointment:', error);
@@ -50,8 +57,8 @@ const Appointment = () => {
 
     const updateAppointment = async () => {
         try {
-        const response = await axios.post(
-            `http://localhost:3001/appointments/update/${editingAppointment._id}`,
+        const response = await API.post(
+            `/appointments/update/${editingAppointment._id}`,
             formData
         );
         setAppointments(
@@ -67,6 +74,15 @@ const Appointment = () => {
     };
 
     return (
+        <>
+        <div>
+                <nav className="navbar">
+                <Link to="/appointment" className="nav-link">Appointments</Link>
+                <Link to="/doctors" className="nav-link">Doctors</Link>
+                <Link to="/patients" className="nav-link">Patients</Link>
+                <button className="nav-link logout" onClick={handleLogout}>Logout</button>
+                </nav>
+            </div>
         <div className="appointment-container">
         <div className="add-appointment">
             <h3>{editingAppointment ? 'Edit Appointment' : 'Add New Appointment'}</h3>
@@ -85,15 +101,15 @@ const Appointment = () => {
             onChange={handleChange}
             />
             {editingAppointment ? (
-            <button onClick={updateAppointment}>Update Appointment</button>
+                <button onClick={updateAppointment}>Update Appointment</button>
             ) : (
-            <button onClick={addAppointment}>Add Appointment</button>
+                <button onClick={addAppointment}>Add Appointment</button>
             )}
         </div>
         <div className="appointment-list">
             <h3>Appointments ({appointments.length})</h3>
             {appointments.map((appointment) => (
-            <div key={appointment._id} className="appointment-card">
+                <div key={appointment._id} className="appointment-card">
                 <p>
                 <strong>{appointment.patientName}</strong>
                 </p>
@@ -115,6 +131,7 @@ const Appointment = () => {
             ))}
         </div>
         </div>
+        </>
     );
 };
 
